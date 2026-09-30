@@ -18,7 +18,7 @@ def generate_sample(tasks_number, employees_number):
     print() """
 
 
-def encode(tasks_number, employees_number):
+def create_individual(tasks_number, employees_number):
     p = [random.randint(0,employees_number-1) for i in range(tasks_number)]
     return p
 
@@ -49,8 +49,12 @@ def crossover(individual_1, individual_2):
 
     return new_individual
 
-def init_population():
-    return
+def init_population(population_size, tasks_number, employees_number):
+    population = []
+    for i in range(population_size):
+        individual = create_individual(tasks_number, employees_number)
+        population.append(individual)
+    return population
 
 def genetic_algorithm(population, fitness_function, muation_function,
                       crossover_function, mutation_probability, elite, max_iteration):
@@ -61,9 +65,10 @@ m, n = int(input("How many tasks are there?")), int(input("How many employees ar
 mutation_probability = 0.1
 elite = 2
 max_iteration = 30
+population_size = 50
 
 t=generate_sample(m,n)
 
-population = init_population()
+population = init_population(population_size, m, n)
 
 genetic_algorithm(population, fitness_calculation, mutation, crossover, mutation_probability, elite, max_iteration)
