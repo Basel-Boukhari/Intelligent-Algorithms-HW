@@ -13,24 +13,42 @@ def generate_sample(tasks_number, employees_number):
 
 t=generate_sample(m,n)
 
-for i in range(n):
+""" for i in range(n):
     for j in range(m):
         print(t[i][j], end=" ")
-    print()
+    print() """
 
 
 def encode(tasks_number, employees_number):
     p = [random.randint(0,employees_number-1) for i in range(tasks_number)]
     return p
 
-def fitness(tasks_number, employees_number, t, population):
+def fitness_calculation(tasks_number, employees_number, t, individual):
     
-    load_on_employee = [0 for i in range(employees_number)]
-    max_load=0
+    load = [0 for i in range(employees_number)]
+    fitness=0
     for j in range(tasks_number):
-        i=population[j]
-        load_on_employee[i][j] += t[i][j]
-        max_load=max(max_load, load_on_employee[i][j])
+        i=individual[j]
+        load[i] += t[i][j]
+        fitness=max(fitness, load[i])
     
-    return max_load
+    return fitness
 
+def mutate(employees_number, individual):
+    ipos = random.randint(0,len(individual))
+
+    new_employee=random.randint(0,employees_number-1)
+
+    individual = individual[:ipos] + new_employee + individual[ipos+1:]
+
+    return individual
+
+def cross_over(individual_1, individual_2):
+    ipos=random.randint(0,len(individual_1))
+
+    new_individual = individual_1[:ipos] + individual_2[ipos+1:]
+
+    return new_individual
+
+
+def selection()
