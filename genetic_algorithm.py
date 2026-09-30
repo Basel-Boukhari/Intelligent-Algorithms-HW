@@ -1,6 +1,6 @@
 import random
 
-m, n = int(input("How many tasks are there?")), int(input("How many employees are there?"))
+
 
 def generate_sample(tasks_number, employees_number):
     min_time=5
@@ -11,7 +11,6 @@ def generate_sample(tasks_number, employees_number):
 
     return t
 
-t=generate_sample(m,n)
 
 """ for i in range(n):
     for j in range(m):
@@ -34,7 +33,7 @@ def fitness_calculation(tasks_number, employees_number, t, individual):
     
     return fitness
 
-def mutate(employees_number, individual):
+def mutation(employees_number, individual):
     ipos = random.randint(0,len(individual))
 
     new_employee=random.randint(0,employees_number-1)
@@ -43,12 +42,28 @@ def mutate(employees_number, individual):
 
     return individual
 
-def cross_over(individual_1, individual_2):
-    ipos=random.randint(0,len(individual_1))
+def crossover(individual_1, individual_2):
+    ipos=random.randint(1,len(individual_1)-2)
 
     new_individual = individual_1[:ipos] + individual_2[ipos+1:]
 
     return new_individual
 
+def init_population():
+    return
 
-def selection()
+def genetic_algorithm(population, fitness_function, muation_function,
+                      crossover_function, mutation_probability, elite, max_iteration):
+    
+    return
+
+m, n = int(input("How many tasks are there?")), int(input("How many employees are there?"))
+mutation_probability = 0.1
+elite = 2
+max_iteration = 30
+
+t=generate_sample(m,n)
+
+population = init_population()
+
+genetic_algorithm(population, fitness_calculation, mutation, crossover, mutation_probability, elite, max_iteration)
