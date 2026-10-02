@@ -1,4 +1,4 @@
-import random
+import random, matplotlib.pyplot as plt
 
 
 
@@ -7,7 +7,7 @@ def generate_sample(tasks_number, employees_number):
     max_time=10*60
 
     t=[[random.randint(min_time, max_time) for i in range(tasks_number)] for j in range(employees_number)]
-    print(t)
+    ####print(t)
 
     return t
 
@@ -62,7 +62,10 @@ def genetic_algorithm(population, fitness_function, muation_function,
     
     population_size = len(population)
 
-    for _ in range(max_iteration):
+    x = []
+    y = []
+
+    for iter in range(max_iteration):
         
 ############        print(population)
         individual_scores = [(fitness_function(tasks_number, employees_number, t, ind), ind) for ind in population]
@@ -72,6 +75,9 @@ def genetic_algorithm(population, fitness_function, muation_function,
 
         sorted_population = [ind for (fitness, ind) in individual_scores]
         population = sorted_population[:top_elite]
+
+        x.append(individual_scores[0][0])
+        y.append(iter)
 
         while (len(population)<population_size):
             prob = random.random()
@@ -89,12 +95,14 @@ def genetic_algorithm(population, fitness_function, muation_function,
                 new_individual = crossover_function(population[ipos1], population[ipos2])
                 population.append(new_individual)
 
-###########        print("iteration %d is finished" %(_))
+###########        print("iteration %d is finished" %(iter))
  
     individual_scores = [(fitness_function(tasks_number, employees_number, t, ind), ind) for ind in population]
     individual_scores.sort()
-    print(individual_scores[0][0], individual_scores[0][1], sep = "    ")
-    return (individual_scores[0][0], individual_scores[0][1])
+
+##########print(individual_scores[0][0], individual_scores[0][1], sep = "    ")
+
+    return (individual_scores[0][0], individual_scores[0][1], x, y)
 
 m, n = int(input("How many tasks are there?")), int(input("How many employees are there?"))
 mutation_probability = 0.1
@@ -108,4 +116,11 @@ population = init_population(population_size, m, n)
 
 # print (population)
 
-genetic_algorithm(population, fitness_calculation, mutation, crossover, mutation_probability, elite, max_iteration, m, n, t)
+best_score, best_solution, x, y = genetic_algorithm(population, fitness_calculation, mutation, crossover, mutation_probability, elite, max_iteration, m, n, t)
+
+""" print (x)
+print (y) """
+print(best_solution, best_score, sep = "    ")
+
+plt.plot(y,x, marker="o")
+plt.show()
