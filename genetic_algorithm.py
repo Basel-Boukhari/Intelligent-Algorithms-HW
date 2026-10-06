@@ -1,4 +1,5 @@
-import random, matplotlib.pyplot as plt
+import random,time, tracemalloc, matplotlib.pyplot as plt
+
 
 
 
@@ -104,23 +105,50 @@ def genetic_algorithm(population, fitness_function, muation_function,
 
     return (individual_scores[0][0], individual_scores[0][1], x, y)
 
-m, n = int(input("How many tasks are there?")), int(input("How many employees are there?"))
-mutation_probability = 0.1
-elite = 0.1
-max_iteration = 30
-population_size = 50
+def time_and_resource_usage(runs = 10):
 
-t = generate_sample(m,n)
+    n=4
+    m = int(input("How many tasks are there?"))
 
-population = init_population(population_size, m, n)
+    mutation_probability = 0.1
+    elite = 0.1
+    max_iteration = 30
+    population_size = 50
 
-# print (population)
+    t = generate_sample(m,n)
 
-best_score, best_solution, x, y = genetic_algorithm(population, fitness_calculation, mutation, crossover, mutation_probability, elite, max_iteration, m, n, t)
+    times = []
+    memories = []
+    best_scores = []
 
-""" print (x)
-print (y) """
-print(best_solution, best_score, sep = "    ")
+    for run in range(runs):
 
-plt.plot(y,x, marker="o")
-plt.show()
+        tracemalloc.start()
+        start_time = time.perf_counter()
+        
+        population = init_population(population_size, m, n)
+
+        # print (population)
+
+        best_score, best_solution, x, y = genetic_algorithm(population, fitness_calculation, mutation, crossover, mutation_probability, elite, max_iteration, m, n, t)
+
+        end_time = time.perf_counter()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        times.append(end_time-start_time)
+        memories.append(peak)
+        best_scores.append(best_score)
+
+        """ print (x)
+        print (y) """
+        print(best_solution, best_score, sep = "    ")
+
+        plt.plot(y,x, marker="o")
+        plt.show()
+
+    print(times)
+    print(memories)
+    print(best_scores)
+
+time_and_resource_usage()
