@@ -77,8 +77,8 @@ def genetic_algorithm(population, fitness_function, muation_function,
         sorted_population = [ind for (fitness, ind) in individual_scores]
         population = sorted_population[:top_elite]
 
-        x.append(individual_scores[0][0])
-        y.append(iter)
+        x.append(iter+1)
+        y.append(individual_scores[0][0])
 
         while (len(population)<population_size):
             prob = random.random()
@@ -110,10 +110,10 @@ def time_and_resource_usage(runs = 10):
     n=4
     m = int(input("How many tasks are there?"))
 
-    mutation_probability = 0.1
+    mutation_probability = 0.3
     elite = 0.1
-    max_iteration = 30
-    population_size = 50
+    max_iteration = 150
+    population_size = 100
 
     t = generate_sample(m,n)
 
@@ -122,33 +122,37 @@ def time_and_resource_usage(runs = 10):
     best_scores = []
 
     for run in range(runs):
-
-        tracemalloc.start()
-        start_time = time.perf_counter()
         
         population = init_population(population_size, m, n)
 
         # print (population)
+        #tracemalloc.start()
+        start_time = time.perf_counter()
 
         best_score, best_solution, x, y = genetic_algorithm(population, fitness_calculation, mutation, crossover, mutation_probability, elite, max_iteration, m, n, t)
 
         end_time = time.perf_counter()
-        current, peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
+        #current, peak = tracemalloc.get_traced_memory()
+        #tracemalloc.stop()
 
         times.append(end_time-start_time)
-        memories.append(peak)
+        #memories.append(peak)
         best_scores.append(best_score)
 
         """ print (x)
         print (y) """
         print(best_solution, best_score, sep = "    ")
 
-        plt.plot(y,x, marker="o")
+        plt.plot(x, y, marker="o")
+
+        plt.title("Genetic Algorithm's best solution for every iteration")
+        plt.xlabel("number of Iterations")
+        plt.ylabel("best soltuion")
+
         plt.show()
 
     print(times)
-    print(memories)
+    #print(memories)
     print(best_scores)
 
 time_and_resource_usage()
