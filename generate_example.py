@@ -3,32 +3,34 @@ import random
 n = 4
 
 for _ in range(10):
-    #m = random.randint(5,20)
-    #m = random.randint(21,1000)
-    #m = random.randint(1001, 10000)
-    def generate_sample(tasks_number, employees_number):
-        min_time=5
-        max_time=40*60
+    size = []
+    size.append(random.randint(5,20))
+    size.append(random.randint(21,1000))
+    size.append(random.randint(1001, 10000))
 
-        t=[[random.randint(min_time, max_time) for i in range(tasks_number)] for j in range(employees_number)]
-        print(t)
+    for m in size:
+        def generate_table(tasks_number, employees_number):
+            min_time=5
+            max_time=40*60
 
-        return t
+            t=[[random.randint(min_time, max_time) for i in range(tasks_number)] for j in range(employees_number)]
+            return t
 
-    t=generate_sample(m,n)
-   
+        t=generate_table(m,n)
+    
+        if m>=5 and m<=20:
+            file_name = f"small_test{_+1}.txt"
+        elif m>=20 and m<=1000:
+            file_name = f"medium_test{_+1}.txt"
+        elif m>=1001 and m<=10000:
+            file_name = f"large_test{_+1}.txt"
 
-    lines = [[n,m]]
-    for i in range(n):
-        lines.append(t[i])
-    lines=str(lines)
+        f = open(file_name,"w")
+        
+        f.writelines(str(m)+'\n')
+        for i in range(n):
+            f.writelines(str(t[i])+'\n')
 
-    if m>=5 and m<=20:
-        file_name = f"small_test{_+1}.txt"
-    elif m>=20 and m<=1000:
-        file_name = f"medium_test{_+1}.txt"
-    elif m>=1001 and m<=10000:
-        file_name = f"large_test{_+1}.txt"
+        f.close
 
-    f = open(file_name,"w")
-    f.writelines(lines)
+    

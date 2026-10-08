@@ -1,24 +1,5 @@
 import random,time, tracemalloc, matplotlib.pyplot as plt
 
-
-
-
-def generate_sample(tasks_number, employees_number):
-    min_time=5
-    max_time=10*60
-
-    t=[[random.randint(min_time, max_time) for i in range(tasks_number)] for j in range(employees_number)]
-    ####print(t)
-
-    return t
-
-
-""" for i in range(n):
-    for j in range(m):
-        print(t[i][j], end=" ")
-    print() """
-
-
 def create_individual(tasks_number, employees_number):
     p = [random.randint(0,employees_number-1) for i in range(tasks_number)]
     return p
@@ -35,7 +16,7 @@ def fitness_calculation(tasks_number, employees_number, t, individual):
     return fitness
 
 def mutation(employees_number, individual):
-    ipos = random.randint(0,len(individual))
+    ipos = random.randint(0,len(individual)-1)
 
     new_employee=[random.randint(0,employees_number-1)]
 
@@ -68,7 +49,6 @@ def genetic_algorithm(population, fitness_function, muation_function,
 
     for iter in range(max_iteration):
         
-############        print(population)
         individual_scores = [(fitness_function(tasks_number, employees_number, t, ind), ind) for ind in population]
         individual_scores.sort()
 
@@ -96,26 +76,36 @@ def genetic_algorithm(population, fitness_function, muation_function,
                 new_individual = crossover_function(population[ipos1], population[ipos2])
                 population.append(new_individual)
 
-###########        print("iteration %d is finished" %(iter))
  
     individual_scores = [(fitness_function(tasks_number, employees_number, t, ind), ind) for ind in population]
     individual_scores.sort()
 
-##########print(individual_scores[0][0], individual_scores[0][1], sep = "    ")
 
     return (individual_scores[0][0], individual_scores[0][1], x, y)
 
-def time_and_resource_usage(runs = 10):
+def read_test(file_name):
+    f = open(file_name, 'r')
+    lines = f.readlines()
+    f.close()
+    t=[]
+    tasks_number = int(lines[0].strip())
+    for i in range(1,len(lines)):
+        s = lines[i].strip()
+        s = s[1:-1]
+        t.append([int(x) for x in s.split(',')])
+    return tasks_number, t
 
-    n=4
-    m = int(input("How many tasks are there?"))
+def time_and_resource_usage(runs):
 
+    n = 4
     mutation_probability = 0.3
-    elite = 0.1
-    max_iteration = 150
+    elite = 0.33
+    max_iteration = 100
     population_size = 100
 
-    t = generate_sample(m,n)
+    file_name = 'small_test1.txt'
+    m, t = read_test(file_name)
+    print(t)
 
     times = []
     memories = []
@@ -123,36 +113,38 @@ def time_and_resource_usage(runs = 10):
 
     for run in range(runs):
         
-        population = init_population(population_size, m, n)
+        
 
-        # print (population)
-        #tracemalloc.start()
         start_time = time.perf_counter()
-
+        
+        population = init_population(population_size, m, n) 
         best_score, best_solution, x, y = genetic_algorithm(population, fitness_calculation, mutation, crossover, mutation_probability, elite, max_iteration, m, n, t)
 
         end_time = time.perf_counter()
-        #current, peak = tracemalloc.get_traced_memory()
-        #tracemalloc.stop()
-
+        
         times.append(end_time-start_time)
-        #memories.append(peak)
         best_scores.append(best_score)
 
-        """ print (x)
-        print (y) """
-        print(best_solution, best_score, sep = "    ")
-
-        plt.plot(x, y, marker="o")
-
+        plt.plot(x, y, linewidth = 1.5)
         plt.title("Genetic Algorithm's best solution for every iteration")
-        plt.xlabel("number of Iterations")
-        plt.ylabel("best soltuion")
-
+        plt.xlabel("Number of Iterations")
+        plt.ylabel("Best Solution")
         plt.show()
+    
+    for run in range(runs):
+
+        tracemalloc.start()
+
+        population = init_population(population_size, m, n)
+        best_score, best_solution, x, y = genetic_algorithm(population, fitness_calculation, mutation, crossover, mutation_probability, elite, max_iteration, m, n, t)
+
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+
+        memories.append(peak/1024/1024)
 
     print(times)
-    #print(memories)
+    print(memories)
     print(best_scores)
 
-time_and_resource_usage()
+time_and_resource_usage(7)
