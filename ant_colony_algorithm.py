@@ -1,31 +1,30 @@
 import random
 import matplotlib.pyplot as plt
 
-
-def generate_sample(tasks_number, employees_number):
-    min_time = 5
-    max_time = 10 * 60
+#دالة تولد بيانات تجريبية وقت انجاز كل موظف للمهمة
+def generate_sample(tasks_number, employees_number, seed=None):
+    min_time = 5  #اقل وقت لتنفيذ المهمة بالدقائق 
+    max_time = 10 * 60  #اعلى وقت لتنفيذ المهمة 
+    #seed خيار اضفته يساعدني بالتجارب 
+    rng = random.Random(seed)  #لتوليد المصفوفة نفسها عند المقارنة 
 
     t = [
-        [random.randint(min_time, max_time) for _ in range(tasks_number)]
+        [rng.randint(min_time, max_time) for _ in range(tasks_number)]
         for _ in range(employees_number)
     ]
-
     return t
 
-
+#دالة توزيع واحد (كم يستغرق التوزيع لحتى ينتهي اخر موظف من مهامه )
 def fitness_calculation(tasks_number, employees_number, t, individual):
-    load = [0 for _ in range(employees_number)]
-    fitness = 0
+    load = [0] * employees_number
 
-    for j in range(tasks_number):
-        i = individual[j]
-        load[i] += t[i][j]
-        fitness = max(fitness, load[i])
+    for task in range(tasks_number):
+        employee = individual[task]
+        load[employee] += t[employee][task]
 
-    return fitness
+    return max(load)
 
-
+#(العجلة الروليتية) اختيار موظف عشوائي بحسب الاوزان
 def choose_employee(probabilities):
     total = sum(probabilities)
     value = random.random() * total
@@ -38,7 +37,7 @@ def choose_employee(probabilities):
 
     return len(probabilities) - 1
 
-
+# بناء توزيع كامل للمهام بواسطة نملة واحدة تعتمد على الفيرومون ووقت الإنجاز المتوقع
 def create_ant_solution(
     tasks_number,
     employees_number,
@@ -48,7 +47,7 @@ def create_ant_solution(
     beta
 ):
     individual = [-1 for _ in range(tasks_number)]
-    load = [0 for _ in range(employees_number)]
+    employee_load = [0 for _ in range(employees_number)]
 
     tasks_order = list(range(tasks_number))
     random.shuffle(tasks_order)
@@ -58,8 +57,8 @@ def create_ant_solution(
 
         for employee in range(employees_number):
             new_makespan = max(
-                max(load),
-                load[employee] + t[employee][task]
+                max(employee_load),
+                employee_load[employee] + t[employee][task]
             )
 
             heuristic = 1 / max(new_makespan, 1)
@@ -71,7 +70,7 @@ def create_ant_solution(
 
         employee = choose_employee(probabilities)
         individual[task] = employee
-        load[employee] += t[employee][task]
+        employee_load[employee] += t[employee][task]
 
     return individual
 
