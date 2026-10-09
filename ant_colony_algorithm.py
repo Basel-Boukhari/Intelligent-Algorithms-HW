@@ -36,7 +36,6 @@ def choose_employee(probabilities):
             return employee
 
     return len(probabilities) - 1
-
 # بناء توزيع كامل للمهام بواسطة نملة واحدة تعتمد على الفيرومون ووقت الإنجاز المتوقع
 def create_ant_solution(
     tasks_number,
@@ -46,35 +45,56 @@ def create_ant_solution(
     alpha,
     beta
 ):
-    individual = [-1 for _ in range(tasks_number)]
-    employee_load = [0 for _ in range(employees_number)]
+    # مصفوفة لحفظ الموظف المسؤول عن كل مهمة
+    solution = [-1] * tasks_number
 
-    tasks_order = list(range(tasks_number))
-    random.shuffle(tasks_order)
+    # مصفوفة لحفظ عبء العمل الحالي لكل موظف
+    loads = [0] * employees_number
 
-    for task in tasks_order:
-        probabilities = []
+    # إنشاء قائمة المهام وخلطها عشوائياً
+    task_indices = list(range(tasks_number))
+    random.shuffle(task_indices)
 
-        for employee in range(employees_number):
-            new_makespan = max(
-                max(employee_load),
-                employee_load[employee] + t[employee][task]
+    # المرور على جميع المهام
+    for task_id in task_indices:
+
+        # تخزين أوزان اختيار كل موظف للمهمة الحالية
+        weights = []
+
+        # معرفة أكبر عبء عمل حالي
+        current_max_load = max(loads)
+
+        # حساب وزن كل موظف للمهمة الحالية
+        for emp_id in range(employees_number):
+
+            # العبء المتوقع إذا أُسندت المهمة لهذا الموظف
+            predicted_load = loads[emp_id] + t[emp_id][task_id]
+            expected_makespan = max(
+                current_max_load,
+                predicted_load
             )
 
-            heuristic = 1 / max(new_makespan, 1)
-            probability = (
-                pheromone[employee][task] ** alpha
-                * heuristic ** beta
+            # كلما كان وقت الإنجاز المتوقع أقل زادت جاذبية اختيار الموظف
+            attractiveness = 1 / max(expected_makespan, 1)
+
+            # تأثير الفيرومون
+            pheromone_effect = (
+                pheromone[emp_id][task_id] ** alpha
             )
-            probabilities.append(probability)
+            heuristic_effect = (
+                attractiveness ** beta
+            )
 
-        employee = choose_employee(probabilities)
-        individual[task] = employee
-        employee_load[employee] += t[employee][task]
+            # حساب الوزن النهائي للموظف
+            weights.append(
+                pheromone_effect * heuristic_effect
+            )
+        selected_emp = choose_employee(weights)
+        solution[task_id] = selected_emp
+        loads[selected_emp] += t[selected_emp][task_id]
 
-    return individual
-
-
+    return solution
+    
 def ant_colony_algorithm(
     tasks_number,
     employees_number,
@@ -86,63 +106,78 @@ def ant_colony_algorithm(
     evaporation_rate,
     Q
 ):
-    pheromone = [
-        [1.0 for _ in range(tasks_number)]
+    # تهيئة مصفوفة الفيرومون بقيمة ابتدائية
+    pheromone_matrix = [
+        [1.0] * tasks_number
         for _ in range(employees_number)
     ]
 
-    best_solution = None
-    best_score = float("inf")
+    # أفضل حل تم إيجاده
+    global_best_solution = None
+    global_best_score = float("inf")
 
-    x = []
-    y = []
+    # لتخزين بيانات الرسم البياني
+    best_scores = []
+    iterations = []
+    for current_iteration in range(max_iteration):
+        solutions = []
 
-    for iteration in range(max_iteration):
-        ant_solutions = []
-
-        for ant in range(ant_count):
-            individual = create_ant_solution(
+        # إنشاء حلول بواسطة جميع النمل
+        for _ in range(ant_count):
+            solution = create_ant_solution(
                 tasks_number,
                 employees_number,
                 t,
-                pheromone,
+                pheromone_matrix,
                 alpha,
                 beta
             )
 
-            score = fitness_calculation(
+            fitness = fitness_calculation(
                 tasks_number,
                 employees_number,
                 t,
-                individual
+                solution
             )
 
-            ant_solutions.append((score, individual))
+            solutions.append((fitness, solution))
 
-        iteration_best_score, iteration_best_solution = min(
-            ant_solutions,
-            key=lambda item: item[0]
+        # استخراج أفضل حل في هذا التكرار
+        current_best_score, current_best_solution = min(
+            solutions,
+            key=lambda x: x[0]
         )
+        if current_best_score < global_best_score:
+            global_best_score = current_best_score
+            global_best_solution = current_best_solution.copy()
 
-        if iteration_best_score < best_score:
-            best_score = iteration_best_score
-            best_solution = iteration_best_solution.copy()
-
-        for employee in range(employees_number):
+        # تبخير الفيرومون
+        for emp in range(employees_number):
             for task in range(tasks_number):
-                pheromone[employee][task] *= (1 - evaporation_rate)
-
-        deposit = Q / max(iteration_best_score, 1)
-
+                pheromone_matrix[emp][task] *= (
+                    1 - evaporation_rate
+                )
+        # حساب كمية الفيرومون المضافة
+        pheromone_amount = Q / max(
+            current_best_score,
+            1
+        )
+        # إضافة الفيرومون إلى إسنادات أفضل حل في هذا التكرار
         for task in range(tasks_number):
-            employee = iteration_best_solution[task]
-            pheromone[employee][task] += deposit
+            assigned_employee = current_best_solution[task]
 
-        x.append(best_score)
-        y.append(iteration)
+            pheromone_matrix[
+                assigned_employee
+            ][task] += pheromone_amount
+        best_scores.append(global_best_score)
+        iterations.append(current_iteration)
 
-    return best_score, best_solution, x, y
-
+    return (
+        global_best_score,
+        global_best_solution,
+        best_scores,
+        iterations
+    )
 m = int(input("How many tasks are there? "))
 n = int(input("How many employees are there? "))
 
@@ -152,10 +187,9 @@ alpha = 1.0
 beta = 2.0
 evaporation_rate = 0.1
 Q = 100.0
-
-t = generate_sample(m, n)
-
-best_score, best_solution, x, y = ant_colony_algorithm(
+# seed لحتى اولد مصفوفة الاوقات نفسها استخدم نفس ال 
+t = generate_sample(m, n, seed=42)
+best_score, best_solution, best_scores, iterations = ant_colony_algorithm(
     m,
     n,
     t,
@@ -167,10 +201,11 @@ best_score, best_solution, x, y = ant_colony_algorithm(
     Q
 )
 
-print(best_solution, best_score, sep="    ")
+print("Best assignment:", best_solution)
+print("Best makespan:", best_score, "minutes")
 
-plt.plot(y, x, marker="o")
+plt.plot(iterations, best_scores, marker="o")
 plt.xlabel("Iteration")
-plt.ylabel("Best Fitness")
+plt.ylabel("Best Makespan (minutes)")
 plt.title("Ant Colony Optimization")
 plt.show()
