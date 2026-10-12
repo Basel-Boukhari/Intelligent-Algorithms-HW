@@ -172,4 +172,4 @@ def time_and_resource_usage(runs):
     print(memories)
     print(best_scores)
 
-time_and_resource_usage(7)
+time_and_resource_usage(1)
