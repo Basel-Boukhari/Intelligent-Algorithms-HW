@@ -57,7 +57,9 @@ def create_ant_solution(
         for emp_id in range(employees_number):
 
             predicted_load = load[emp_id] + t[emp_id][task_id]
-            attractiveness = 1 / max(predicted_load, 1)
+            #attractiveness = 1 / max(predicted_load, 1)
+            #attractiveness = 1/ (t[emp_id][task_id] * max(predicted_load,1))
+            attractiveness = 1 / t[emp_id][task_id]
 
             pheromone_effect = pheromone[emp_id][task_id] ** alpha
             heuristic_effect = attractiveness ** beta
@@ -153,14 +155,14 @@ def read_test(file_name):
 
 
 
-ant_count = 50
-max_iteration = 30
+ant_count = 15
+max_iteration = 100
 alpha = 1.0
-beta = 2.0
-rho = 0.1
+beta = 10.0
+rho = 0.5
 Q = 100.0
 
-file_name = 'small_test1.txt'
+file_name = 'large_test8.txt'
 n = 4
 m , t = read_test(file_name)
 

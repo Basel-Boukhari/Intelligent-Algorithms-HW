@@ -38,46 +38,63 @@ def init_population(population_size, tasks_number, employees_number):
         population.append(individual)
     return population
 
-def genetic_algorithm(population, fitness_function, muation_function,
-                      crossover_function, mutation_probability, elite, max_iteration,
-                      tasks_number, employees_number, t ):
+def genetic_algorithm(population, population_size, parents_size, fitness_function, mutation_function,
+                      mutation_probability, crossover_function, crossover_probability, 
+                      elite, max_iteration, tasks_number, employees_number, t ):
     
-    population_size = len(population)
-
     x = []
     y = []
 
     for iter in range(max_iteration):
         
-        individual_scores = [(fitness_function(tasks_number, employees_number, t, ind), ind) for ind in population]
+        
+        individual_scores = [(fitness_function(tasks_number, employees_number, t, ind), ind)
+                             for ind in population]
         individual_scores.sort()
-
-        top_elite = int(elite*population_size)
-
-        sorted_population = [ind for (fitness, ind) in individual_scores]
-        population = sorted_population[:top_elite]
 
         x.append(iter+1)
         y.append(individual_scores[0][0])
 
-        while (len(population)<population_size):
-            prob = random.random()
-            if prob < mutation_probability:
+        weights = [1.0/fitness for fitness, ind in individual_scores]
+        total_weight = sum(weights)
+        
+        parents = []
+        for i in range(parents_size):
+            val = random.random() * total_weight
+            for j in range(population_size):
+                val -= weights[j]
+                if val <= 0:
+                    parents.append(individual_scores[j][1])
+                    break
+        
+        
+        sorted_population = [ind for (fitness, ind) in individual_scores]
+        top_elite = int(elite*population_size)
+        new_population = sorted_population[:top_elite]
 
-                ipos = random.randint(0, top_elite-1)
+        while (len(new_population)<population_size):
 
-                new_individual = muation_function(employees_number, population[ipos])
-                population.append(new_individual)
+            crossover_prob = random.random()
+            if crossover_prob < crossover_probability:
+                ipos1 = random.randint(0, parents_size-1)
+                ipos2 = random.randint(0, parents_size-1)
+                new_individual = crossover_function(parents[ipos1], parents[ipos2])
             
             else:
-                ipos1 = random.randint(0, top_elite-1)
-                ipos2 = random.randint(0, top_elite-1)
+                ipos = random.randint(0, parents_size-1)
+                new_individual = parents[ipos].copy()
+            
+            mutation_prob = random.random()
+            if mutation_prob < mutation_probability:
+                new_individual = mutation_function(employees_number, new_individual)
+            
+            new_population.append(new_individual)                
 
-                new_individual = crossover_function(population[ipos1], population[ipos2])
-                population.append(new_individual)
 
- 
-    individual_scores = [(fitness_function(tasks_number, employees_number, t, ind), ind) for ind in population]
+        population = new_population
+
+    individual_scores = [(fitness_function(tasks_number, employees_number, t, ind), ind)
+                         for ind in population]
     individual_scores.sort()
 
 
@@ -99,13 +116,15 @@ def time_and_resource_usage(runs):
 
     n = 4
     mutation_probability = 0.3
+    crossover_probability = 0.6
     elite = 0.33
     max_iteration = 100
     population_size = 100
+    parents_size = 5
 
-    file_name = 'small_test1.txt'
+    file_name = 'large_test8.txt'
     m, t = read_test(file_name)
-    print(t)
+    #print(t)
 
     times = []
     memories = []
@@ -118,10 +137,11 @@ def time_and_resource_usage(runs):
         start_time = time.perf_counter()
         
         population = init_population(population_size, m, n) 
-        best_score, best_solution, x, y = genetic_algorithm(population, fitness_calculation, mutation, crossover, mutation_probability, elite, max_iteration, m, n, t)
-
+        best_score, best_solution, x, y = genetic_algorithm(population, population_size, parents_size,
+                                                            fitness_calculation, mutation, mutation_probability,
+                                                            crossover, crossover_probability, elite,
+                                                            max_iteration, m, n, t)                              
         end_time = time.perf_counter()
-        
         times.append(end_time-start_time)
         best_scores.append(best_score)
 
@@ -136,12 +156,17 @@ def time_and_resource_usage(runs):
         tracemalloc.start()
 
         population = init_population(population_size, m, n)
-        best_score, best_solution, x, y = genetic_algorithm(population, fitness_calculation, mutation, crossover, mutation_probability, elite, max_iteration, m, n, t)
+        best_score, best_solution, x, y = genetic_algorithm(population, population_size, parents_size,
+                                                            fitness_calculation, mutation, mutation_probability,
+                                                            crossover, crossover_probability, elite,
+                                                            max_iteration, m, n, t)
 
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
 
         memories.append(peak/1024/1024)
+
+        print(f"finished run {run+1} for memory tracing")
 
     print(times)
     print(memories)
