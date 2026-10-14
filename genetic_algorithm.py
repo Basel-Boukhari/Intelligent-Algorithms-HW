@@ -1,8 +1,8 @@
 import random,time, tracemalloc, matplotlib.pyplot as plt
 
 def create_individual(tasks_number, employees_number):
-    p = [random.randint(0,employees_number-1) for i in range(tasks_number)]
-    return p
+    individual = [random.randint(0,employees_number-1) for i in range(tasks_number)]
+    return individual
 
 def fitness_calculation(tasks_number, employees_number, t, individual):
     
@@ -15,14 +15,13 @@ def fitness_calculation(tasks_number, employees_number, t, individual):
     
     return fitness
 
-def mutation(employees_number, individual):
-    ipos = random.randint(0,len(individual)-1)
-
-    new_employee=[random.randint(0,employees_number-1)]
-
-    individual = individual[:ipos] + new_employee + individual[ipos+1:]
-
-    return individual
+def mutation(tasks_number, employees_number, individual, mutation_probabilty):
+    
+    new_individual = individual.copy()
+    for j in range(tasks_number):
+        if random.random() < mutation_probabilty:
+            new_individual[j] = random.randint(0, employees_number-1)
+    return new_individual
 
 def crossover(individual_1, individual_2):
     ipos=random.randint(1,len(individual_1)-2)
@@ -84,14 +83,14 @@ def genetic_algorithm(population, population_size, parents_size, fitness_functio
                 ipos = random.randint(0, parents_size-1)
                 new_individual = parents[ipos].copy()
             
-            mutation_prob = random.random()
-            if mutation_prob < mutation_probability:
-                new_individual = mutation_function(employees_number, new_individual)
+
+            new_individual = mutation_function(tasks_number, employees_number,
+                                               new_individual, mutation_probability)
             
             new_population.append(new_individual)                
 
 
-        population = new_population
+        population = new_population.copy()
 
     individual_scores = [(fitness_function(tasks_number, employees_number, t, ind), ind)
                          for ind in population]
@@ -115,12 +114,12 @@ def read_test(file_name):
 def time_and_resource_usage(runs):
 
     n = 4
-    mutation_probability = 0.3
-    crossover_probability = 0.6
-    elite = 0.33
-    max_iteration = 100
+    mutation_probability = 0.005
+    crossover_probability = 0.7
+    elite = 0.1
+    max_iteration = 300
     population_size = 100
-    parents_size = 5
+    parents_size = 20
 
     file_name = 'large_test8.txt'
     m, t = read_test(file_name)
@@ -132,8 +131,6 @@ def time_and_resource_usage(runs):
 
     for run in range(runs):
         
-        
-
         start_time = time.perf_counter()
         
         population = init_population(population_size, m, n) 
@@ -151,22 +148,22 @@ def time_and_resource_usage(runs):
         plt.ylabel("Best Solution")
         plt.show()
     
-    for run in range(runs):
+    # for run in range(runs):
 
-        tracemalloc.start()
+    #     tracemalloc.start()
 
-        population = init_population(population_size, m, n)
-        best_score, best_solution, x, y = genetic_algorithm(population, population_size, parents_size,
-                                                            fitness_calculation, mutation, mutation_probability,
-                                                            crossover, crossover_probability, elite,
-                                                            max_iteration, m, n, t)
+    #     population = init_population(population_size, m, n)
+    #     best_score, best_solution, x, y = genetic_algorithm(population, population_size, parents_size,
+    #                                                         fitness_calculation, mutation, mutation_probability,
+    #                                                         crossover, crossover_probability, elite,
+    #                                                         max_iteration, m, n, t)
 
-        current, peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
+    #     current, peak = tracemalloc.get_traced_memory()
+    #     tracemalloc.stop()
 
-        memories.append(peak/1024/1024)
+    #     memories.append(peak/1024/1024)
 
-        print(f"finished run {run+1} for memory tracing")
+    #     print(f"finished run {run+1} for memory tracing")
 
     print(times)
     print(memories)
