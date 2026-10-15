@@ -1,5 +1,4 @@
-import random
-import matplotlib.pyplot as plt
+import random, matplotlib.pyplot as plt
 
 def fitness_calculation(tasks_number, employees_number, t, individual):
     load = [0] * employees_number
