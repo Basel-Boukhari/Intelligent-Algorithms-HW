@@ -1,8 +1,8 @@
 import random
 
-n = 4
+n = 4 
 
-for _ in range(10):
+for _ in range(3):
     size = []
     size.append(random.randint(5,20))
     size.append(random.randint(21,1000))
