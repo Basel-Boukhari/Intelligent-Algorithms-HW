@@ -1,4 +1,4 @@
-import random, matplotlib.pyplot as plt
+import random, time, tracemalloc, matplotlib.pyplot as plt
 
 def fitness_calculation(tasks_number, employees_number, t, individual):
     load = [0] * employees_number
@@ -44,8 +44,7 @@ def create_ant_solution(
         
         for emp_id in range(employees_number):
 
-            predicted_load = load[emp_id] + t[emp_id][task_id]
-            attractiveness = 1 / max(predicted_load, 1)
+            attractiveness = 1 / t[emp_id][task_id]
 
             pheromone_effect = pheromone[emp_id][task_id] ** alpha
             heuristic_effect = attractiveness ** beta
@@ -79,7 +78,6 @@ def ant_colony_algorithm(
     global_best_score = float("inf")
 
     best_scores = []
-    iterations = []
     for current_iteration in range(max_iteration):
         solutions = []
 
@@ -117,15 +115,12 @@ def ant_colony_algorithm(
                 pheromone_matrix[emp][task] += add
             
         best_scores.append(global_best_score)
-        iterations.append(current_iteration)
 
     return (
         global_best_score,
         global_best_solution,
-        best_scores,
-        iterations
+        best_scores
     )
-
 
 def read_test(file_name):
     f = open(file_name, 'r')
@@ -140,35 +135,115 @@ def read_test(file_name):
     return tasks_number, t
 
 
+def monitor_time_and_resource(file_name, runs):
 
-ant_count = 50
-max_iteration = 30
-alpha = 1.0
-beta = 2.0
-rho = 0.1
-Q = 100.0
+    ant_count = 15
+    max_iteration = 100
+    alpha = 1.0
+    beta = 2.0
+    rho = 0.1
+    Q = 10.0
 
-file_name = 'small_test1.txt'
-n = 4
-m , t = read_test(file_name)
+    n = 4
+    m , t = read_test(file_name)
+    #print(t)
+    
+    x_values = [i for i in range(1,max_iteration+1)]
+    y_values = [0 for i in range(max_iteration)]
+    times = []
+    memories = []
+    best_scores = []
+    best_score = float("inf")
+    best_solution = [0 for i in range(m)]
+    
+    for run in range(runs):
+        print(f"start run {run+1} for time and best_score monitoring")
+        start_time = time.perf_counter()
+        score, solution, y = ant_colony_algorithm(
+                                m,
+                                n,
+                                t,
+                                ant_count,
+                                max_iteration,
+                                alpha,
+                                beta,
+                                rho,
+                                Q
+                            )                                                       
+        end_time = time.perf_counter()
+        times.append(end_time-start_time)
+        best_scores.append(score)
 
-best_score, best_solution, best_scores, iterations = ant_colony_algorithm(
-    m,
-    n,
-    t,
-    ant_count,
-    max_iteration,
-    alpha,
-    beta,
-    rho,
-    Q
-)
+        for iteration in range(len(y_values)):
+            y_values[iteration] += y[iteration]
+        
+        if best_score > score:
+            best_score = score
+            best_solution = solution.copy()
+    
+    for run in range(runs):
+        print(f"start run {run+1} for memory monitoring")
+        tracemalloc.start()
+        score, solution, y = ant_colony_algorithm(
+                                m,
+                                n,
+                                t,
+                                ant_count,
+                                max_iteration,
+                                alpha,
+                                beta,
+                                rho,
+                                Q
+                            )
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        memories.append(peak/1024/1024)
 
-print("Best assignment:", best_solution)
-print("Best load:", best_score, "minutes")
+    f = open("aco_best_solution.txt", 'w')
+    f.write(str(best_solution))
+    f.close
 
-plt.plot(iterations, best_scores, marker="o")
-plt.xlabel("Iteration")
-plt.ylabel("max load (minutes)")
-plt.title("Ant Colony Optimization")
-plt.show()
+    max_time = round(max(times),4)
+    min_time = round(min(times),4)
+    average_time = round(sum(times)/len(times),4)
+    print(f"Time (seconds):  min={min_time}   max={max_time}   average={average_time}")
+
+    max_memory = round(max(memories),4)
+    min_memory = round(min(memories),4)
+    average_memory = round(sum(memories)/len(memories),4)
+    print(f"Memory (MB):  min={min_memory}   max={max_memory}   average={average_memory}")
+    
+    max_best_score = round(max(best_scores),4)
+    min_best_score = round(min(best_scores),4)
+    average_best_score = round(sum(best_scores)/len(best_scores),4)
+    print(f"Time to Finish all tasks (minutes):  min={min_best_score}   max={max_best_score}   average={average_best_score}")
+
+    
+    y_values = [(val / runs) for val in y_values]
+
+    plt.plot(x_values, y_values, linewidth = 2.0)
+    plt.title("Ant colony Optimization's Average (best so far) fitness")
+    plt.xlabel("Number of Iterations")
+    plt.ylabel("Best Fitness")
+    plt.show()
+
+
+file_size = input("What is the size of the file? (type s for small, m for medium, l for large): ").lower()
+while file_size not in ['s','m','l']:
+    file_size = input("please type only s,m or l: ").lower()
+
+file_number = int(input("What is the number of the file? (type 1,2 or 3): "))
+while file_number not in [1,2,3]:
+    file_number = int(input("please type only 1,2 or 3: "))
+
+if file_size == 's':
+    file_name = f"small_test{file_number}.txt"
+elif file_size == 'm':
+    file_name = f"medium_test{file_number}.txt"
+else:
+    file_name = f"large_test{file_number}.txt"
+
+runs = int(input("How many times do you want to run the Algorithm? "
+                "(It will run double the times you typed, one for time monitoring and one for memory monitoring):"))
+
+monitor_time_and_resource(file_name, runs)
