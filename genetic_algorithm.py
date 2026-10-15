@@ -5,29 +5,24 @@ def create_individual(tasks_number, employees_number):
     return individual
 
 def fitness_calculation(tasks_number, employees_number, t, individual):
-    
     load = [0 for i in range(employees_number)]
     fitness=0
     for j in range(tasks_number):
         i=individual[j]
         load[i] += t[i][j]
         fitness=max(fitness, load[i])
-    
     return fitness
 
-def mutation(tasks_number, employees_number, individual, mutation_probabilty):
-    
+def mutation(tasks_number, employees_number, individual, mutation_probability):
     new_individual = individual.copy()
     for j in range(tasks_number):
-        if random.random() < mutation_probabilty:
+        if random.random() < mutation_probability:
             new_individual[j] = random.randint(0, employees_number-1)
     return new_individual
 
 def crossover(individual_1, individual_2):
     ipos=random.randint(1,len(individual_1)-2)
-
     new_individual = individual_1[:ipos] + individual_2[ipos:]
-
     return new_individual
 
 def init_population(population_size, tasks_number, employees_number):
@@ -37,22 +32,20 @@ def init_population(population_size, tasks_number, employees_number):
         population.append(individual)
     return population
 
-def genetic_algorithm(population, population_size, parents_size, fitness_function, mutation_function,
+def genetic_algorithm(population_size, parents_size, fitness_function, mutation_function,
                       mutation_probability, crossover_function, crossover_probability, 
                       elite, max_iteration, tasks_number, employees_number, t ):
     
-    x = []
+    population = init_population(population_size, tasks_number, employees_number)
+    best_fitness = float("inf")
     y = []
-
-    for iter in range(max_iteration):
-        
-        
+    for iteration in range(max_iteration):
         individual_scores = [(fitness_function(tasks_number, employees_number, t, ind), ind)
                              for ind in population]
         individual_scores.sort()
 
-        x.append(iter+1)
-        y.append(individual_scores[0][0])
+        best_fitness = min(best_fitness, individual_scores[0][0])
+        y.append(best_fitness)
 
         weights = [1.0/fitness for fitness, ind in individual_scores]
         total_weight = sum(weights)
@@ -96,8 +89,11 @@ def genetic_algorithm(population, population_size, parents_size, fitness_functio
                          for ind in population]
     individual_scores.sort()
 
+    best_fitness = min(best_fitness, individual_scores[0][0])
+    y.append(best_fitness)
+    best_solution = individual_scores[0][1]
 
-    return (individual_scores[0][0], individual_scores[0][1], x, y)
+    return (best_fitness, best_solution, y)
 
 def read_test(file_name):
     f = open(file_name, 'r')
@@ -111,7 +107,7 @@ def read_test(file_name):
         t.append([int(x) for x in s.split(',')])
     return tasks_number, t
 
-def time_and_resource_usage(runs):
+def monitor_time_and_resource(file_name, runs):
 
     n = 4
     mutation_probability = 0.005
@@ -121,52 +117,89 @@ def time_and_resource_usage(runs):
     population_size = 100
     parents_size = 20
 
-    file_name = 'large_test8.txt'
     m, t = read_test(file_name)
     #print(t)
-
+    
+    x_values = [i for i in range(1,max_iteration+2)]
+    y_values = [0 for i in range(max_iteration+1)]
     times = []
     memories = []
     best_scores = []
-
+    best_score = float("inf")
+    best_solution = [0 for i in range(m)]
+    
     for run in range(runs):
-        
+        print(f"start run {run+1} for time and best_score monitoring")
         start_time = time.perf_counter()
-        
-        population = init_population(population_size, m, n) 
-        best_score, best_solution, x, y = genetic_algorithm(population, population_size, parents_size,
-                                                            fitness_calculation, mutation, mutation_probability,
-                                                            crossover, crossover_probability, elite,
-                                                            max_iteration, m, n, t)                              
+        score, solution, y = genetic_algorithm(population_size, parents_size, fitness_calculation,
+                                                        mutation, mutation_probability, crossover,
+                                                        crossover_probability, elite, max_iteration, m, n, t)                                                       
         end_time = time.perf_counter()
         times.append(end_time-start_time)
-        best_scores.append(best_score)
+        best_scores.append(score)
 
-        plt.plot(x, y, linewidth = 1.5)
-        plt.title("Genetic Algorithm's best solution for every iteration")
-        plt.xlabel("Number of Iterations")
-        plt.ylabel("Best Solution")
-        plt.show()
+        for iteration in range(len(y_values)):
+            y_values[iteration] += y[iteration]
+        
+        if best_score > score:
+            best_score = score
+            best_solution = solution.copy()
     
-    # for run in range(runs):
+    for run in range(runs):
+        print(f"start run {run+1} for memory monitoring")
+        tracemalloc.start()
+        score, solution, y = genetic_algorithm(population_size, parents_size, fitness_calculation,
+                                                        mutation, mutation_probability, crossover,
+                                                        crossover_probability, elite, max_iteration, m, n, t)
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        memories.append(peak/1024/1024)
 
-    #     tracemalloc.start()
+    f = open("ga_best_solution.txt", 'w')
+    f.write(str(best_solution))
+    f.close
 
-    #     population = init_population(population_size, m, n)
-    #     best_score, best_solution, x, y = genetic_algorithm(population, population_size, parents_size,
-    #                                                         fitness_calculation, mutation, mutation_probability,
-    #                                                         crossover, crossover_probability, elite,
-    #                                                         max_iteration, m, n, t)
+    max_time = round(max(times),4)
+    min_time = round(min(times),4)
+    average_time = round(sum(times)/len(times),4)
+    print(f"Time (seconds):  min={min_time}   max={max_time}   average={average_time}")
 
-    #     current, peak = tracemalloc.get_traced_memory()
-    #     tracemalloc.stop()
+    max_memory = round(max(memories),4)
+    min_memory = round(min(memories),4)
+    average_memory = round(sum(memories)/len(memories),4)
+    print(f"Memory (MB):  min={min_memory}   max={max_memory}   average={average_memory}")
+    
+    max_best_score = round(max(best_scores),4)
+    min_best_score = round(min(best_scores),4)
+    average_best_score = round(sum(best_scores)/len(best_scores),4)
+    print(f"Time to Finish all tasks (minutes):  min={min_best_score}   max={max_best_score}   average={average_best_score}")
 
-    #     memories.append(peak/1024/1024)
+    
+    y_values = [(val / runs) for val in y_values]
 
-    #     print(f"finished run {run+1} for memory tracing")
+    plt.plot(x_values, y_values, linewidth = 2.0)
+    plt.title("Genetic Algorithm's Average (best so far) fitness")
+    plt.xlabel("Number of Iterations")
+    plt.ylabel("Best Fitness")
+    plt.show()
 
-    print(times)
-    print(memories)
-    print(best_scores)
 
-time_and_resource_usage(1)
+file_size = input("What is the size of the file? (type s for small, m for medium, l for large): ").lower()
+while file_size not in ['s','m','l']:
+    file_size = input("please type only s,m or l: ").lower()
+
+file_number = int(input("What is the number of the file? (type 1,2 or 3): "))
+while file_number not in [1,2,3]:
+    file_number = int(input("please type only 1,2 or 3: "))
+
+if file_size == 's':
+    file_name = f"small_test{file_number}.txt"
+elif file_size == 'm':
+    file_name = f"medium_test{file_number}.txt"
+else:
+    file_name = f"large_test{file_number}.txt"
+
+runs = int(input("How many times do you want to run the Algorithm? "
+                "(It will run double the times you typed, one for time monitoring and one for memory monitoring):"))
+
+monitor_time_and_resource(file_name, runs)
