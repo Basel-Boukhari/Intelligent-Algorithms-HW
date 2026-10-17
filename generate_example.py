@@ -1,6 +1,6 @@
 import random
 
-n = 4 
+n = 10 
 
 for _ in range(3):
     size = []
@@ -27,9 +27,9 @@ for _ in range(3):
 
         f = open(file_name,"w")
         
-        f.writelines(str(m)+'\n')
+        f.write(str(n)+", "+str(m)+'\n')
         for i in range(n):
-            f.writelines(str(t[i])+'\n')
+            f.write(str(t[i])+'\n')
 
         f.close
 
