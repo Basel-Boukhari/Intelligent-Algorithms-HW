@@ -65,49 +65,60 @@ def create_ant_solution(t, tasks_number, employees_number, pheromone, alpha, bet
 
 def ant_colony_algorithm(t, tasks_number, employees_number, ant_count, max_iteration, alpha, beta,
                         rho, Q):
-    pheromone_matrix = [
-        [1.0] * tasks_number
-        for _ in range(employees_number)
-    ]
+    
+    pheromone_matrix = [[1.0] * tasks_number for i in range(employees_number)]
 
     global_best_solution = None
     global_best_score = float("inf")
 
-    best_scores = []
+    y = []
+    
     for current_iteration in range(max_iteration):
-        solutions = []
+        ants = []
 
-        for _ in range(ant_count):
-            solution = create_ant_solution (t, tasks_number, employees_number, pheromone_matrix,
+        for i in range(ant_count):
+            ant = create_ant_solution (t, tasks_number, employees_number, pheromone_matrix,
                                             alpha, beta)
-            fitness = fitness_calculation(t, tasks_number, employees_number, solution)
-            solutions.append((fitness, solution))
+            fitness = fitness_calculation(t, tasks_number, employees_number, ant)
+            ants.append((fitness, ant))
             
             if fitness < global_best_score:
                 global_best_score = fitness
-                global_best_solution = solution.copy()
+                global_best_solution = ant.copy()
 
         for emp in range(employees_number):
             for task in range(tasks_number):
                 pheromone_matrix[emp][task] *= (1 - rho)
                 
-        for fitness, solution in solutions:
+        for fitness, solution in ants:
             add = Q / max(fitness,1)
             for task in range(tasks_number):
                 emp = solution[task]
                 pheromone_matrix[emp][task] += add
             
-        best_scores.append(global_best_score)
+        y.append(global_best_score)
 
-    return (global_best_score, global_best_solution,best_scores )
+
+    for i in range(ant_count):
+        ant = create_ant_solution (t, tasks_number, employees_number, pheromone_matrix,
+                                   alpha, beta)
+        fitness = fitness_calculation(t, tasks_number, employees_number, ant)
+            
+        if fitness < global_best_score:
+            global_best_score = fitness
+            global_best_solution = ant.copy()
+
+    y.append(global_best_score)
+    
+    return (global_best_score, global_best_solution, y )
 
 
 
 def run_aco(t, tasks_number, employees_number, runs, ants_number = 15, max_iteration = 200,
             alpha = 1.0, beta = 2.0, rho = 0.1, Q = 100.0):
     
-    x_values = [i for i in range(1,max_iteration + 1)]
-    y_values = [0 for i in range(max_iteration)]
+    x_values = [i for i in range(max_iteration + 1)]
+    y_values = [0 for i in range(max_iteration + 1)]
     times = []
     memories = []
     best_scores = []
@@ -143,53 +154,54 @@ def run_aco(t, tasks_number, employees_number, runs, ants_number = 15, max_itera
     return dict(x_values = x_values, y_values = y_values, best_score = best_score, 
                 best_solution = best_solution, times = times, memories = memories, best_scores = best_scores)
 
+if __name__ == "__main__":
 
-file_size = input("What is the size of the file? (type s for small, m for medium, l for large): ").lower()
-while file_size not in ['s','m','l']:
-    file_size = input("please type only s,m or l: ").lower()
+    file_size = input("What is the size of the file? (type s for small, m for medium, l for large): ").lower()
+    while file_size not in ['s','m','l']:
+        file_size = input("please type only s,m or l: ").lower()
 
-file_number = int(input("What is the number of the file? (type 1,2 or 3): "))
-while file_number not in [1,2,3]:
-    file_number = int(input("please type only 1,2 or 3: "))
+    file_number = int(input("What is the number of the file? (type 1,2 or 3): "))
+    while file_number not in [1,2,3]:
+        file_number = int(input("please type only 1,2 or 3: "))
 
-if file_size == 's':
-    file_name = f"small_test{file_number}.txt"
-elif file_size == 'm':
-    file_name = f"medium_test{file_number}.txt"
-else:
-    file_name = f"large_test{file_number}.txt"
+    if file_size == 's':
+        file_name = f"small_test{file_number}.txt"
+    elif file_size == 'm':
+        file_name = f"medium_test{file_number}.txt"
+    else:
+        file_name = f"large_test{file_number}.txt"
 
 
-runs = int(input("How many times do you want to run the Algorithm? "
-                "(It will run double the times you typed, one for time monitoring and one for memory monitoring): "))
+    runs = int(input("How many times do you want to run the Algorithm? "
+                    "(It will run double the times you typed, one for time monitoring and one for memory monitoring): "))
 
-t, m, n = read_test(file_name)
-dict_aco = run_aco(t, m, n, runs)
+    t, m, n = read_test(file_name)
+    dict_aco = run_aco(t, m, n, runs)
 
-f = open("aco_best_solution.txt", 'w')
-f.write(str(dict_aco["best_solution"]))
-f.close()
+    f = open("aco_best_solution.txt", 'w')
+    f.write(str(dict_aco["best_solution"]))
+    f.close()
 
-max_time = round(max(dict_aco["times"]),4)
-min_time = round(min(dict_aco["times"]),4)
-average_time = round(sum(dict_aco["times"])/len(dict_aco["times"]),4)
-print(f"Time (seconds):  min={min_time}   max={max_time}   average={average_time}")
+    max_time = round(max(dict_aco["times"]),4)
+    min_time = round(min(dict_aco["times"]),4)
+    average_time = round(sum(dict_aco["times"])/len(dict_aco["times"]),4)
+    print(f"Time (seconds):  min={min_time}   max={max_time}   average={average_time}")
 
-max_memory = round(max(dict_aco["memories"]),4)
-min_memory = round(min(dict_aco["memories"]),4)
-average_memory = round(sum(dict_aco["memories"])/len(dict_aco["memories"]),4)
-print(f"Memory (MB):  min={min_memory}   max={max_memory}   average={average_memory}")
-    
-max_best_score = round(max(dict_aco["best_scores"]),4)
-min_best_score = round(min(dict_aco["best_scores"]),4)
-average_best_score = round(sum(dict_aco["best_scores"])/len(dict_aco["best_scores"]),4)
-print(f"Time to Finish all tasks (minutes):  min={min_best_score}   max={max_best_score}   average={average_best_score}")
+    max_memory = round(max(dict_aco["memories"]),4)
+    min_memory = round(min(dict_aco["memories"]),4)
+    average_memory = round(sum(dict_aco["memories"])/len(dict_aco["memories"]),4)
+    print(f"Memory (MB):  min={min_memory}   max={max_memory}   average={average_memory}")
+        
+    max_best_score = round(max(dict_aco["best_scores"]),4)
+    min_best_score = round(min(dict_aco["best_scores"]),4)
+    average_best_score = round(sum(dict_aco["best_scores"])/len(dict_aco["best_scores"]),4)
+    print(f"Time to Finish all tasks (minutes):  min={min_best_score}   max={max_best_score}   average={average_best_score}")
 
-    
-dict_aco["y_values"] = [(val / runs) for val in dict_aco["y_values"]]
+        
+    dict_aco["y_values"] = [(val / runs) for val in dict_aco["y_values"]]
 
-plt.plot(dict_aco["x_values"], dict_aco["y_values"], linewidth = 2.0, color = 'red')
-plt.title("Ant colony Optimization's Average (best so far) fitness")
-plt.xlabel("Number of Iterations")
-plt.ylabel("Best Fitness")
-plt.show()
+    plt.plot(dict_aco["x_values"], dict_aco["y_values"], linewidth = 2.0, color = 'red')
+    plt.title("Ant colony Optimization's Average (best so far) fitness")
+    plt.xlabel("Number of Iterations")
+    plt.ylabel("Best Fitness")
+    plt.show()

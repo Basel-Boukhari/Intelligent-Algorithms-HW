@@ -49,15 +49,19 @@ def genetic_algorithm(t, tasks_number, employees_number, population_size, parent
                       fitness_function, mutation_function, mutation_probability, crossover_function,
                       crossover_probability, elite):
                       
-    
-    population = init_population(tasks_number, employees_number, population_size)
-    individual_scores = [(fitness_function(t, tasks_number, employees_number, ind), ind)
-                             for ind in population]
-    individual_scores.sort()
-
     best_fitness = float("inf")
     y = []
+
+    population = init_population(tasks_number, employees_number, population_size)
+
     for iteration in range(max_iteration):
+
+        individual_scores = [(fitness_function(t, tasks_number, employees_number, ind), ind) 
+                             for ind in population]
+        individual_scores.sort()
+
+        best_fitness = min(best_fitness, individual_scores[0][0])
+        y.append(best_fitness)
 
         weights = [1.0/fitness for fitness, ind in individual_scores]
         total_weight = sum(weights)
@@ -94,14 +98,16 @@ def genetic_algorithm(t, tasks_number, employees_number, population_size, parent
             new_population.append(new_individual)
 
         population = new_population.copy()
-        individual_scores = [(fitness_function(t, tasks_number, employees_number, ind), ind)
-                         for ind in population]
-        individual_scores.sort()
 
-        best_fitness = min(best_fitness, individual_scores[0][0])
-        y.append(best_fitness)
 
+    individual_scores = [(fitness_function(t, tasks_number, employees_number, ind), ind) 
+                             for ind in population]
+    individual_scores.sort()
+
+    best_fitness = min(best_fitness, individual_scores[0][0])
+    y.append(best_fitness)
     best_solution = individual_scores[0][1]
+    
     return (best_fitness, best_solution, y)
 
 
@@ -110,8 +116,8 @@ def run_ga(t, tasks_number, employees_number, runs, population_size = 100, paren
                               mutation_function = mutation, mutation_probability = 0.005,
                               crossover_function = crossover, crossover_probability = 0.7, elite = 0.1 ):
 
-    x_values = [i for i in range(1,max_iteration + 1)]
-    y_values = [0 for i in range(max_iteration)]
+    x_values = [i for i in range(max_iteration + 1)]
+    y_values = [0 for i in range(max_iteration + 1)]
     times = []
     memories = []
     best_scores = []
@@ -149,52 +155,53 @@ def run_ga(t, tasks_number, employees_number, runs, population_size = 100, paren
     return dict(x_values = x_values, y_values = y_values, best_score = best_score, 
                 best_solution = best_solution, times = times, memories = memories, best_scores = best_scores)
 
+if __name__ == "__main__":
 
-file_size = input("What is the size of the file? (type s for small, m for medium, l for large): ").lower()
-while file_size not in ['s','m','l']:
-    file_size = input("please type only s,m or l: ").lower()
+    file_size = input("What is the size of the file? (type s for small, m for medium, l for large): ").lower()
+    while file_size not in ['s','m','l']:
+        file_size = input("please type only s,m or l: ").lower()
 
-file_number = int(input("What is the number of the file? (type 1,2 or 3): "))
-while file_number not in [1,2,3]:
-    file_number = int(input("please type only 1,2 or 3: "))
+    file_number = int(input("What is the number of the file? (type 1,2 or 3): "))
+    while file_number not in [1,2,3]:
+        file_number = int(input("please type only 1,2 or 3: "))
 
-if file_size == 's':
-    file_name = f"small_test{file_number}.txt"
-elif file_size == 'm':
-    file_name = f"medium_test{file_number}.txt"
-else:
-    file_name = f"large_test{file_number}.txt"
+    if file_size == 's':
+        file_name = f"small_test{file_number}.txt"
+    elif file_size == 'm':
+        file_name = f"medium_test{file_number}.txt"
+    else:
+        file_name = f"large_test{file_number}.txt"
 
-runs = int(input("How many times do you want to run the Algorithm? "
-                "(It will run double the times you typed, one for time monitoring and one for memory monitoring): "))
+    runs = int(input("How many times do you want to run the Algorithm? "
+                    "(It will run double the times you typed, one for time monitoring and one for memory monitoring): "))
 
-t, m, n = read_test(file_name)
-dict_ga = run_ga(t, m, n, runs)
+    t, m, n = read_test(file_name)
+    dict_ga = run_ga(t, m, n, runs)
 
-f = open("ga_best_solution.txt", 'w')
-f.write(str(dict_ga["best_solution"]))
-f.close()
+    f = open("ga_best_solution.txt", 'w')
+    f.write(str(dict_ga["best_solution"]))
+    f.close()
 
-max_time = round(max(dict_ga["times"]),4)
-min_time = round(min(dict_ga["times"]),4)
-average_time = round(sum(dict_ga["times"])/len(dict_ga["times"]),4)
-print(f"Time (seconds):  min={min_time}   max={max_time}   average={average_time}")
+    max_time = round(max(dict_ga["times"]),4)
+    min_time = round(min(dict_ga["times"]),4)
+    average_time = round(sum(dict_ga["times"])/len(dict_ga["times"]),4)
+    print(f"Time (seconds):  min={min_time}   max={max_time}   average={average_time}")
 
-max_memory = round(max(dict_ga["memories"]),4)
-min_memory = round(min(dict_ga["memories"]),4)
-average_memory = round(sum(dict_ga["memories"])/len(dict_ga["memories"]),4)
-print(f"Memory (MB):  min={min_memory}   max={max_memory}   average={average_memory}")
-    
-max_best_score = round(max(dict_ga["best_scores"]),4)
-min_best_score = round(min(dict_ga["best_scores"]),4)
-average_best_score = round(sum(dict_ga["best_scores"])/len(dict_ga["best_scores"]),4)
-print(f"Time to Finish all tasks (minutes):  min={min_best_score}   max={max_best_score}   average={average_best_score}")
+    max_memory = round(max(dict_ga["memories"]),4)
+    min_memory = round(min(dict_ga["memories"]),4)
+    average_memory = round(sum(dict_ga["memories"])/len(dict_ga["memories"]),4)
+    print(f"Memory (MB):  min={min_memory}   max={max_memory}   average={average_memory}")
+        
+    max_best_score = round(max(dict_ga["best_scores"]),4)
+    min_best_score = round(min(dict_ga["best_scores"]),4)
+    average_best_score = round(sum(dict_ga["best_scores"])/len(dict_ga["best_scores"]),4)
+    print(f"Time to Finish all tasks (minutes):  min={min_best_score}   max={max_best_score}   average={average_best_score}")
 
-    
-dict_ga["y_values"] = [(val / runs) for val in dict_ga["y_values"]]
+        
+    dict_ga["y_values"] = [(val / runs) for val in dict_ga["y_values"]]
 
-plt.plot(dict_ga["x_values"], dict_ga["y_values"], linewidth = 2.0, color = 'blue')
-plt.title("Genetic Algorithm's Average (best so far) Fitness")
-plt.xlabel("Number of Iterations")
-plt.ylabel("Best Fitness")
-plt.show()
+    plt.plot(dict_ga["x_values"], dict_ga["y_values"], linewidth = 2.0, color = 'blue')
+    plt.title("Genetic Algorithm's Average (best so far) Fitness")
+    plt.xlabel("Number of Iterations")
+    plt.ylabel("Best Fitness")
+    plt.show()
