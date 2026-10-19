@@ -17,7 +17,7 @@ def create_individual(tasks_number, employees_number):
     individual = [random.randint(0,employees_number-1) for i in range(tasks_number)]
     return individual
 
-def fitness_calculation(t, tasks_number, employees_number, individual):
+def calculate_fitness(t, tasks_number, employees_number, individual):
     load = [0 for i in range(employees_number)]
     fitness=0
     for j in range(tasks_number):
@@ -33,8 +33,8 @@ def mutation(tasks_number, employees_number, individual, mutation_probability):
             new_individual[j] = random.randint(0, employees_number-1)
     return new_individual
 
-def crossover(individual_1, individual_2):
-    ipos=random.randint(1,len(individual_1)-2)
+def crossover(tasks_number, individual_1, individual_2):
+    ipos=random.randint(1,tasks_number - 2)
     new_individual = individual_1[:ipos] + individual_2[ipos:]
     return new_individual
 
@@ -81,11 +81,10 @@ def genetic_algorithm(t, tasks_number, employees_number, population_size, parent
 
         while (len(new_population)<population_size):
 
-            crossover_prob = random.random()
-            if crossover_prob < crossover_probability:
+            if random.random() < crossover_probability:
                 ipos1 = random.randint(0, parents_size-1)
                 ipos2 = random.randint(0, parents_size-1)
-                new_individual = crossover_function(parents[ipos1], parents[ipos2])
+                new_individual = crossover_function(tasks_number, parents[ipos1], parents[ipos2])
             
             else:
                 ipos = random.randint(0, parents_size-1)
@@ -112,7 +111,7 @@ def genetic_algorithm(t, tasks_number, employees_number, population_size, parent
 
 
 def run_ga(t, tasks_number, employees_number, runs, population_size = 100, parents_size = 20,
-                              max_iteration = 200, fitness_function = fitness_calculation,
+                              max_iteration = 200, fitness_function = calculate_fitness,
                               mutation_function = mutation, mutation_probability = 0.005,
                               crossover_function = crossover, crossover_probability = 0.7, elite = 0.1 ):
 
@@ -151,6 +150,8 @@ def run_ga(t, tasks_number, employees_number, runs, population_size = 100, paren
         tracemalloc.stop()
         memories.append(peak/1024/1024)
     
+    for iteration in range(len(y_values)):
+            y_values[iteration] /= runs
     
     return dict(x_values = x_values, y_values = y_values, best_score = best_score, 
                 best_solution = best_solution, times = times, memories = memories, best_scores = best_scores)
@@ -178,7 +179,7 @@ if __name__ == "__main__":
     t, m, n = read_test(file_name)
     dict_ga = run_ga(t, m, n, runs)
 
-    f = open("ga_best_solution.txt", 'w')
+    f = open(f"ga_best_solution_for_{file_name}.txt", 'w')
     f.write(str(dict_ga["best_solution"]))
     f.close()
 
@@ -197,8 +198,6 @@ if __name__ == "__main__":
     average_best_score = round(sum(dict_ga["best_scores"])/len(dict_ga["best_scores"]),4)
     print(f"Time to Finish all tasks (minutes):  min={min_best_score}   max={max_best_score}   average={average_best_score}")
 
-        
-    dict_ga["y_values"] = [(val / runs) for val in dict_ga["y_values"]]
 
     plt.plot(dict_ga["x_values"], dict_ga["y_values"], linewidth = 2.0, color = 'blue')
     plt.title("Genetic Algorithm's Average (best so far) Fitness")
