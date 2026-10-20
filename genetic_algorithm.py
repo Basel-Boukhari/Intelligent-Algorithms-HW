@@ -1,17 +1,4 @@
-import random,time, tracemalloc, matplotlib.pyplot as plt
-
-def read_test(file_name):
-    f = open(file_name, 'r')
-    lines = f.readlines()
-    f.close()
-    t=[]
-    employees_number, tasks_number  = lines[0].strip().split(',')
-    employees_number, tasks_number = int(employees_number), int(tasks_number)
-    for i in range(1,len(lines)):
-        s = lines[i].strip()
-        s = s[1:-1]
-        t.append([int(x) for x in s.split(',')])
-    return  t, tasks_number, employees_number
+import random, time, tracemalloc, matplotlib.pyplot as plt
 
 def create_individual(tasks_number, employees_number):
     individual = [random.randint(0,employees_number-1) for i in range(tasks_number)]
@@ -156,7 +143,21 @@ def run_ga(t, tasks_number, employees_number, runs, population_size = 100, paren
     return dict(x_values = x_values, y_values = y_values, best_score = best_score, 
                 best_solution = best_solution, times = times, memories = memories, best_scores = best_scores)
 
+
 if __name__ == "__main__":
+
+    def read_test(file_name):
+        f = open(file_name, 'r')
+        lines = f.readlines()
+        f.close()
+        t=[]
+        employees_number, tasks_number  = lines[0].strip().split(',')
+        employees_number, tasks_number = int(employees_number), int(tasks_number)
+        for i in range(1,len(lines)):
+            s = lines[i].strip()
+            s = s[1:-1]
+            t.append([int(x) for x in s.split(',')])
+        return  t, tasks_number, employees_number
 
     file_size = input("What is the size of the file? (type s for small, m for medium, l for large): ").lower()
     while file_size not in ['s','m','l']:

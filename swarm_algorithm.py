@@ -1,20 +1,7 @@
 import random, time, tracemalloc, matplotlib.pyplot as plt
 
-def read_test(file_name):
-    f = open(file_name, 'r')
-    lines = f.readlines()
-    f.close()
-    t=[]
-    employees_number, tasks_number  = lines[0].strip().split(',')
-    employees_number, tasks_number = int(employees_number), int(tasks_number)
-    for i in range(1,len(lines)):
-        s = lines[i].strip()
-        s = s[1:-1]
-        t.append([int(x) for x in s.split(',')])
-    return  t, tasks_number, employees_number
 
-
-def calculate_fitness (t, bird, tasks_number, employees_number):
+def calculate_fitness (t, tasks_number, employees_number, bird):
     cost = 0
     load = [0 for i in range(employees_number)]
     for j in range(tasks_number):
@@ -26,16 +13,16 @@ def calculate_fitness (t, bird, tasks_number, employees_number):
 
 def PSO(t, tasks_number, employees_number, birds_number, iterations_number, c1, c2):
 
-    y = []
-
     birds = [[random.randint(0, employees_number - 1) for j in range(tasks_number)]
               for i in range(birds_number)]
     gbest = float("inf")
     solution_gbest = [0 for i in range(tasks_number)]
-    pbests = [calculate_fitness(t, birds[i], tasks_number, employees_number) for i in range(birds_number)]
+    pbests = [calculate_fitness(t, tasks_number, employees_number, birds[i]) for i in range(birds_number)]
     solutions_pbests = [list(bird) for bird in birds]
 
     velocity = [[random.uniform(-1, 1) for i in range(tasks_number)] for _ in range(birds_number)]
+
+    y = []
 
     for i in range(birds_number):
         if (gbest > pbests[i]):
@@ -60,7 +47,7 @@ def PSO(t, tasks_number, employees_number, birds_number, iterations_number, c1, 
                 if birds[i][j] > employees_number - 1:
                     birds[i][j] = employees_number - 1
         for i in range(birds_number):
-            current_bird_fitness = calculate_fitness(t, birds[i], tasks_number, employees_number)
+            current_bird_fitness = calculate_fitness(t, tasks_number, employees_number, birds[i])
             if current_bird_fitness < pbests[i]:
                 pbests[i] = current_bird_fitness
                 solutions_pbests[i] = list(birds[i])
@@ -107,12 +94,30 @@ def run_pso(t, tasks_number, employees_number, runs,
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
         memories.append(peak/1024/1024)
+
+    for iteration in range(len(y_values)):
+            y_values[iteration] /= runs
     
     
     return dict(x_values = x_values, y_values = y_values, best_score = best_score, 
                 best_solution = best_solution, times = times, memories = memories, best_scores = best_scores)
 
+
 if __name__ == "__main__":
+
+    def read_test(file_name):
+        f = open(file_name, 'r')
+        lines = f.readlines()
+        f.close()
+        t=[]
+        employees_number, tasks_number  = lines[0].strip().split(',')
+        employees_number, tasks_number = int(employees_number), int(tasks_number)
+        for i in range(1,len(lines)):
+            s = lines[i].strip()
+            s = s[1:-1]
+            t.append([int(x) for x in s.split(',')])
+        return  t, tasks_number, employees_number
+
     file_size = input("What is the size of the file? (type s for small, m for medium, l for large): ").lower()
     while file_size not in ['s','m','l']:
         file_size = input("please type only s,m or l: ").lower()
@@ -134,7 +139,7 @@ if __name__ == "__main__":
     t, m, n = read_test(file_name)
     dict_pso = run_pso(t, m, n, runs)
 
-    f = open("pso_best_solution.txt", 'w')
+    f = open(f"pso_best_solution_for_{file_name}.txt", 'w')
     f.write(str(dict_pso["best_solution"]))
     f.close()
 
@@ -154,8 +159,6 @@ if __name__ == "__main__":
     print(f"Time to Finish all tasks (minutes):  min={min_best_score}   max={max_best_score}   average={average_best_score}")
 
         
-    dict_pso["y_values"] = [(val / runs) for val in dict_pso["y_values"]]
-
     plt.plot(dict_pso["x_values"], dict_pso["y_values"], linewidth = 2.0, color = 'green')
     plt.title("Particle Swarm Optimization's Average (best so far) Fitness")
     plt.xlabel("Number of Iterations")

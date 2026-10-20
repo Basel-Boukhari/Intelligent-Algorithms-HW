@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-import genetic_algorithm as GA, ant_colony_algorithm as ACO, swarm as PSO
+import genetic_algorithm as GA, ant_colony_algorithm as ACO, swarm_algorithm as PSO
 
 def read_test(file_name):
     f = open(file_name, 'r')
