@@ -1,20 +1,6 @@
 import random, time, tracemalloc, matplotlib.pyplot as plt
 
-def read_test(file_name):
-    f = open(file_name, 'r')
-    lines = f.readlines()
-    f.close()
-    t=[]
-    employees_number, tasks_number  = lines[0].strip().split(',')
-    employees_number, tasks_number = int(employees_number), int(tasks_number)
-    for i in range(1,len(lines)):
-        s = lines[i].strip()
-        s = s[1:-1]
-        t.append([int(x) for x in s.split(',')])
-    return  t, tasks_number, employees_number
-
-
-def fitness_calculation(t, tasks_number, employees_number, individual):
+def calculate_fitness(t, tasks_number, employees_number, individual):
     load = [0] * employees_number
 
     for task in range(tasks_number):
@@ -41,10 +27,7 @@ def create_ant_solution(t, tasks_number, employees_number, pheromone, alpha, bet
    
     solution = [-1] * tasks_number
 
-    task_indices = [i for i in range(tasks_number)]
-    random.shuffle(task_indices)
-
-    for task_id in task_indices:
+    for task_id in range(tasks_number):
 
         weights = []
 
@@ -79,7 +62,7 @@ def ant_colony_algorithm(t, tasks_number, employees_number, ant_count, max_itera
         for i in range(ant_count):
             ant = create_ant_solution (t, tasks_number, employees_number, pheromone_matrix,
                                             alpha, beta)
-            fitness = fitness_calculation(t, tasks_number, employees_number, ant)
+            fitness = calculate_fitness(t, tasks_number, employees_number, ant)
             ants.append((fitness, ant))
             
             if fitness < global_best_score:
@@ -88,7 +71,7 @@ def ant_colony_algorithm(t, tasks_number, employees_number, ant_count, max_itera
 
         for emp in range(employees_number):
             for task in range(tasks_number):
-                pheromone_matrix[emp][task] *= (1 - rho)
+                pheromone_matrix[emp][task] *= rho
                 
         for fitness, solution in ants:
             add = Q / max(fitness,1)
@@ -102,7 +85,7 @@ def ant_colony_algorithm(t, tasks_number, employees_number, ant_count, max_itera
     for i in range(ant_count):
         ant = create_ant_solution (t, tasks_number, employees_number, pheromone_matrix,
                                    alpha, beta)
-        fitness = fitness_calculation(t, tasks_number, employees_number, ant)
+        fitness = calculate_fitness(t, tasks_number, employees_number, ant)
             
         if fitness < global_best_score:
             global_best_score = fitness
@@ -115,7 +98,7 @@ def ant_colony_algorithm(t, tasks_number, employees_number, ant_count, max_itera
 
 
 def run_aco(t, tasks_number, employees_number, runs, ants_number = 15, max_iteration = 200,
-            alpha = 1.0, beta = 2.0, rho = 0.1, Q = 100.0):
+            alpha = 1.0, beta = 2.0, rho = 0.9, Q = 100.0):
     
     x_values = [i for i in range(max_iteration + 1)]
     y_values = [0 for i in range(max_iteration + 1)]
@@ -150,11 +133,26 @@ def run_aco(t, tasks_number, employees_number, runs, ants_number = 15, max_itera
         tracemalloc.stop()
         memories.append(peak/1024/1024)
     
+    for iteration in range(len(y_values)):
+        y_values[iteration] /= runs
     
     return dict(x_values = x_values, y_values = y_values, best_score = best_score, 
                 best_solution = best_solution, times = times, memories = memories, best_scores = best_scores)
 
 if __name__ == "__main__":
+
+    def read_test(file_name):
+        f = open(file_name, 'r')
+        lines = f.readlines()
+        f.close()
+        t=[]
+        employees_number, tasks_number  = lines[0].strip().split(',')
+        employees_number, tasks_number = int(employees_number), int(tasks_number)
+        for i in range(1,len(lines)):
+            s = lines[i].strip()
+            s = s[1:-1]
+            t.append([int(x) for x in s.split(',')])
+        return  t, tasks_number, employees_number
 
     file_size = input("What is the size of the file? (type s for small, m for medium, l for large): ").lower()
     while file_size not in ['s','m','l']:
@@ -178,7 +176,7 @@ if __name__ == "__main__":
     t, m, n = read_test(file_name)
     dict_aco = run_aco(t, m, n, runs)
 
-    f = open("aco_best_solution.txt", 'w')
+    f = open(f"aco_best_solution_for_{file_name}.txt", 'w')
     f.write(str(dict_aco["best_solution"]))
     f.close()
 
@@ -198,8 +196,6 @@ if __name__ == "__main__":
     print(f"Time to Finish all tasks (minutes):  min={min_best_score}   max={max_best_score}   average={average_best_score}")
 
         
-    dict_aco["y_values"] = [(val / runs) for val in dict_aco["y_values"]]
-
     plt.plot(dict_aco["x_values"], dict_aco["y_values"], linewidth = 2.0, color = 'red')
     plt.title("Ant colony Optimization's Average (best so far) fitness")
     plt.xlabel("Number of Iterations")
