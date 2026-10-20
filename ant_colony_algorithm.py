@@ -1,10 +1,10 @@
 import random, time, tracemalloc, matplotlib.pyplot as plt
 
-def calculate_fitness(t, tasks_number, employees_number, individual):
+def calculate_fitness(t, tasks_number, employees_number, ant):
     load = [0] * employees_number
 
     for task in range(tasks_number):
-        employee = individual[task]
+        employee = ant[task]
         load[employee] += t[employee][task]
 
     return max(load)
