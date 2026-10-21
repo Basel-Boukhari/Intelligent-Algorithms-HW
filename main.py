@@ -36,7 +36,8 @@ runs = int(input("How many times do you want to run the Algorithm? "
                 "(It will run double the times you typed, one for time monitoring and one for memory monitoring): "))
 t, m, n = read_test(file_name)
 
-open(f"{file_name}_results.txt", 'w')
+f = open(f"{file_name}_results.txt", 'w')
+f.close()
 
 dict_algos_funcs = {"GA": GA.run_ga, "PSO": PSO.run_pso, "ACO": ACO.run_aco}
 dict_algos_colors = {"GA": "blue", "PSO":"green", "ACO":"red"}
@@ -52,8 +53,6 @@ for algorithm, function in dict_algos_funcs.items():
     print(f"Running {algorithm}")
     print(line)
     dict_results[algorithm] = function(t, m, n, runs)
-
-    dict_results[algorithm]["y_values"] = [(val / runs) for val in dict_results[algorithm]["y_values"]]
 
     f = open(f"{algorithm.lower()}_best_solution_for_{file_name}.txt", 'w')
     f.write(str(dict_results[algorithm]["best_solution"]))
@@ -78,6 +77,12 @@ for algorithm, function in dict_algos_funcs.items():
     print(s)
     file_lines.append(s)
 
+    max_memory_time = round(max(dict_results[algorithm]["memory_times"]),4)
+    min_memory_time = round(min(dict_results[algorithm]["memory_times"]),4)
+    average_memory_time = round(sum(dict_results[algorithm]["memory_times"])/len(dict_results[algorithm]["memory_times"]),4)
+    s = f"Time taken with memory measuring (second):  min={min_memory_time}   max={max_memory_time}   average={average_memory_time}\n"
+    print(s)
+    file_lines.append(s)
     max_best_score = round(max(dict_results[algorithm]["best_scores"]),4)
     min_best_score = round(min(dict_results[algorithm]["best_scores"]),4)
     average_best_score = round(sum(dict_results[algorithm]["best_scores"]) / len(dict_results[algorithm]["best_scores"]),4)

@@ -61,13 +61,14 @@ def PSO(t, tasks_number, employees_number, birds_number, iterations_number, c1, 
 
 
 def run_pso(t, tasks_number, employees_number, runs,
-            birds_number = 30, max_iteration = 200, c1 = 2.0, c2 = 2.0):
+            birds_number = 40, max_iteration = 200, c1 = 2.0, c2 = 2.0):
 
     
     x_values = [i for i in range(max_iteration + 1)]
     y_values = [0 for i in range(max_iteration + 1)]
     times = []
     memories = []
+    memory_times = []
     best_scores = []
     best_score = float("inf")
     best_solution = [0 for i in range(tasks_number)]
@@ -89,10 +90,13 @@ def run_pso(t, tasks_number, employees_number, runs,
     
     for run in range(runs):
         print(f"start run {run+1} for memory monitoring")
+        start_time = time.perf_counter()
         tracemalloc.start()
         score, solution, y = PSO(t, tasks_number, employees_number, birds_number, max_iteration, c1, c2)
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
+        end_time = time.perf_counter()
+        memory_times.append(end_time-start_time)
         memories.append(peak/1024/1024)
 
     for iteration in range(len(y_values)):
@@ -100,7 +104,7 @@ def run_pso(t, tasks_number, employees_number, runs,
     
     
     return dict(x_values = x_values, y_values = y_values, best_score = best_score, 
-                best_solution = best_solution, times = times, memories = memories, best_scores = best_scores)
+                best_solution = best_solution, times = times, memories = memories, memory_times = memory_times, best_scores = best_scores)
 
 
 if __name__ == "__main__":
@@ -152,6 +156,11 @@ if __name__ == "__main__":
     min_memory = round(min(dict_pso["memories"]),4)
     average_memory = round(sum(dict_pso["memories"])/len(dict_pso["memories"]),4)
     print(f"Memory (MB):  min={min_memory}   max={max_memory}   average={average_memory}")
+
+    max_memory_time = round(max(dict_pso["memory_times"]),4)
+    min_memory_time = round(min(dict_pso["memory_times"]),4)
+    average_memory_time = round(sum(dict_pso["memory_times"])/len(dict_pso["memory_times"]),4)
+    print(f"Time taken with memory measuring (second):  min={min_memory_time}   max={max_memory_time}   average={average_memory_time}")
         
     max_best_score = round(max(dict_pso["best_scores"]),4)
     min_best_score = round(min(dict_pso["best_scores"]),4)

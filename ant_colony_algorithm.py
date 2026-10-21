@@ -104,6 +104,7 @@ def run_aco(t, tasks_number, employees_number, runs, ants_number = 15, max_itera
     y_values = [0 for i in range(max_iteration + 1)]
     times = []
     memories = []
+    memory_times = []
     best_scores = []
     best_score = float("inf")
     best_solution = [0 for i in range(tasks_number)]
@@ -126,18 +127,21 @@ def run_aco(t, tasks_number, employees_number, runs, ants_number = 15, max_itera
     
     for run in range(runs):
         print(f"start run {run+1} for memory monitoring")
+        start_time = time.perf_counter()
         tracemalloc.start()
         score, solution, y = ant_colony_algorithm(t, tasks_number, employees_number, ants_number,
                                                   max_iteration, alpha, beta, rho, Q)  
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
+        end_time = time.perf_counter()
+        memory_times.append(end_time-start_time)
         memories.append(peak/1024/1024)
     
     for iteration in range(len(y_values)):
         y_values[iteration] /= runs
     
     return dict(x_values = x_values, y_values = y_values, best_score = best_score, 
-                best_solution = best_solution, times = times, memories = memories, best_scores = best_scores)
+                best_solution = best_solution, times = times, memories = memories, memory_times = memory_times, best_scores = best_scores)
 
 if __name__ == "__main__":
 
@@ -189,6 +193,11 @@ if __name__ == "__main__":
     min_memory = round(min(dict_aco["memories"]),4)
     average_memory = round(sum(dict_aco["memories"])/len(dict_aco["memories"]),4)
     print(f"Memory (MB):  min={min_memory}   max={max_memory}   average={average_memory}")
+
+    max_memory_time = round(max(dict_aco["memory_times"]),4)
+    min_memory_time = round(min(dict_aco["memory_times"]),4)
+    average_memory_time = round(sum(dict_aco["memory_times"])/len(dict_aco["memory_times"]),4)
+    print(f"Time taken with memory measuring (second):  min={min_memory_time}   max={max_memory_time}   average={average_memory_time}")
         
     max_best_score = round(max(dict_aco["best_scores"]),4)
     min_best_score = round(min(dict_aco["best_scores"]),4)
