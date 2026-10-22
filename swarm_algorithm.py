@@ -88,20 +88,19 @@ def run_pso(t, tasks_number, employees_number, runs,
             best_score = score
             best_solution = solution.copy()
     
-    for run in range(runs):
-        print(f"start run {run+1} for memory monitoring")
-        start_time = time.perf_counter()
-        tracemalloc.start()
-        score, solution, y = PSO(t, tasks_number, employees_number, birds_number, max_iteration, c1, c2)
-        current, peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-        end_time = time.perf_counter()
-        memory_times.append(end_time-start_time)
-        memories.append(peak/1024/1024)
-
     for iteration in range(len(y_values)):
             y_values[iteration] /= runs
     
+    print(f"start run for memory monitoring")
+    start_time = time.perf_counter()
+    tracemalloc.start()
+    score, solution, y = PSO(t, tasks_number, employees_number, birds_number, max_iteration, c1, c2)
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    end_time = time.perf_counter()
+    memory_times.append(end_time-start_time)
+    memories.append(peak/1024/1024)
+
     
     return dict(x_values = x_values, y_values = y_values, best_score = best_score, 
                 best_solution = best_solution, times = times, memories = memories, memory_times = memory_times, best_scores = best_scores)
@@ -138,7 +137,7 @@ if __name__ == "__main__":
         file_name = f"large_test{file_number}.txt"
 
     runs = int(input("How many times do you want to run the Algorithm? "
-                    "(It will run double the times you typed, one for time monitoring and one for memory monitoring): "))
+                    "(It will add another run for memory monitoring): "))
 
     t, m, n = read_test(file_name)
     dict_pso = run_pso(t, m, n, runs)

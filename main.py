@@ -33,7 +33,7 @@ else:
     file_name = f"large_test{file_number}.txt"
 
 runs = int(input("How many times do you want to run the Algorithm? "
-                "(It will run double the times you typed, one for time monitoring and one for memory monitoring): "))
+                "(It will add another run for memory monitoring): "))
 t, m, n = read_test(file_name)
 
 f = open(f"{file_name}_results.txt", 'w')
